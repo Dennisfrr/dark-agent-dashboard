@@ -86,22 +86,6 @@ export function CRMSidebar() {
         </ul>
       </nav>
 
-      {!collapsed && (
-        <div className="absolute bottom-4 left-4 right-4">
-          <div className="bg-gradient-primary rounded-lg p-4 text-primary-foreground">
-            <div className="text-sm font-medium">Upgrade para Pro</div>
-            <div className="text-xs opacity-90 mt-1">
-              Acesso ilimitado a todos recursos
-            </div>
-            <Button 
-              className="w-full mt-3 bg-background/20 hover:bg-background/30 text-primary-foreground"
-              size="sm"
-            >
-              Upgrade
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
