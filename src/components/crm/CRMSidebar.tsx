@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { 
   BarChart3, 
   Users, 
@@ -18,21 +19,22 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 const navigation = [
-  { name: "Dashboard", icon: Home, current: true },
-  { name: "Leads", icon: UserPlus, current: false },
-  { name: "Clientes", icon: Users, current: false },
-  { name: "Pipeline", icon: Target, current: false },
-  { name: "Vendas", icon: TrendingUp, current: false },
-  { name: "Relatórios", icon: BarChart3, current: false },
-  { name: "E-mails", icon: Mail, current: false },
-  { name: "Chamadas", icon: Phone, current: false },
-  { name: "Calendário", icon: Calendar, current: false },
-  { name: "Documentos", icon: FileText, current: false },
-  { name: "Configurações", icon: Settings, current: false },
+  { name: "Dashboard", icon: Home, path: "/" },
+  { name: "Leads", icon: UserPlus, path: "/leads" },
+  { name: "Clientes", icon: Users, path: "/clientes" },
+  { name: "Pipeline", icon: Target, path: "/pipeline" },
+  { name: "Vendas", icon: TrendingUp, path: "/vendas" },
+  { name: "Relatórios", icon: BarChart3, path: "/relatorios" },
+  { name: "E-mails", icon: Mail, path: "/emails" },
+  { name: "Chamadas", icon: Phone, path: "/chamadas" },
+  { name: "Calendário", icon: Calendar, path: "/calendario" },
+  { name: "Documentos", icon: FileText, path: "/documentos" },
+  { name: "Configurações", icon: Settings, path: "/configuracoes" },
 ];
 
 export function CRMSidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
 
   return (
     <div className={cn(
@@ -67,14 +69,17 @@ export function CRMSidebar() {
           {navigation.map((item) => (
             <li key={item.name}>
               <Button
-                variant={item.current ? "secondary" : "ghost"}
+                variant={location.pathname === item.path ? "secondary" : "ghost"}
                 className={cn(
                   "w-full justify-start",
                   collapsed ? "px-2" : "px-3"
                 )}
+                asChild
               >
-                <item.icon className={cn("w-5 h-5", collapsed ? "" : "mr-3")} />
-                {!collapsed && <span>{item.name}</span>}
+                <Link to={item.path}>
+                  <item.icon className={cn("w-5 h-5", collapsed ? "" : "mr-3")} />
+                  {!collapsed && <span>{item.name}</span>}
+                </Link>
               </Button>
             </li>
           ))}

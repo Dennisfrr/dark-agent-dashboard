@@ -8,7 +8,12 @@ import { SupportChat } from "./SupportChat";
 import { RecentActivities } from "./RecentActivities";
 import { SalesPipeline } from "./SalesPipeline";
 
-export function CRMLayout() {
+interface CRMLayoutProps {
+  children?: React.ReactNode;
+  showDashboard?: boolean;
+}
+
+export function CRMLayout({ children, showDashboard = false }: CRMLayoutProps) {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   return (
@@ -18,22 +23,28 @@ export function CRMLayout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <DashboardHeader onToggleChat={() => setIsChatOpen(!isChatOpen)} />
         
-        <main className="flex-1 overflow-y-auto p-6 space-y-6">
-          <MetricsCards />
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SalesChart />
-            <SalesPipeline />
-          </div>
-          
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2">
-              <ClientsList />
+        <main className="flex-1 overflow-y-auto">
+          {showDashboard ? (
+            <div className="p-6 space-y-6">
+              <MetricsCards />
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <SalesChart />
+                <SalesPipeline />
+              </div>
+              
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="xl:col-span-2">
+                  <ClientsList />
+                </div>
+                <div>
+                  <RecentActivities />
+                </div>
+              </div>
             </div>
-            <div>
-              <RecentActivities />
-            </div>
-          </div>
+          ) : (
+            children
+          )}
         </main>
       </div>
       
