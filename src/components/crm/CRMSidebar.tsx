@@ -49,7 +49,7 @@ export function CRMSidebar() {
               alt="BMA Logo" 
               className={cn(
                 "object-contain transition-all duration-300 filter brightness-0 invert",
-                collapsed ? "w-12 h-12" : "w-20 h-20"
+                collapsed ? "w-16 h-16" : "w-24 h-24"
               )}
             />
           </div>
