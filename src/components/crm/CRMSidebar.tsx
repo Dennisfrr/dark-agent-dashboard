@@ -75,8 +75,9 @@ export function CRMSidebar() {
               <Button
                 variant={location.pathname === item.path ? "secondary" : "ghost"}
                 className={cn(
-                  "w-full justify-start",
-                  collapsed ? "px-2" : "px-3"
+                  "w-full justify-start transition-all duration-200 hover:bg-accent/50 shine-effect",
+                  collapsed ? "px-2" : "px-3",
+                  location.pathname === item.path && "bg-accent/70 border border-accent"
                 )}
                 asChild
               >

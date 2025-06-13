@@ -40,7 +40,7 @@ export function MetricsCards() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {metrics.map((metric) => (
-        <Card key={metric.title} className="relative overflow-hidden">
+        <Card key={metric.title} className="relative overflow-hidden glass-effect border-accent/20 hover:border-accent/40 transition-all duration-300 shine-effect">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {metric.title}

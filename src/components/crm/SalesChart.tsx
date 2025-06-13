@@ -12,7 +12,7 @@ const salesData = [
 
 export function SalesChart() {
   return (
-    <Card>
+    <Card className="glass-effect border-accent/20 hover:border-accent/40 transition-all duration-300">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Vendas & Leads</span>

@@ -12,7 +12,7 @@ const pipelineStages = [
 
 export function SalesPipeline() {
   return (
-    <Card>
+    <Card className="glass-effect border-accent/20 hover:border-accent/40 transition-all duration-300">
       <CardHeader>
         <CardTitle>Pipeline de Vendas</CardTitle>
       </CardHeader>
