@@ -42,14 +42,18 @@ export function CRMSidebar() {
       collapsed ? "w-16" : "w-64"
     )}>
       <div className="flex h-16 items-center justify-between px-4 border-b border-border">
-        {!collapsed && (
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg">CRM Pro</span>
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 flex items-center justify-center">
+            <img 
+              src="/lovable-uploads/20be4af3-33bb-4dcf-9274-7dc7b57ddfc4.png" 
+              alt="BMA Logo" 
+              className="w-8 h-8 object-contain"
+            />
           </div>
-        )}
+          {!collapsed && (
+            <span className="font-bold text-xl tracking-wide font-playfair">BMA</span>
+          )}
+        </div>
         <Button
           variant="ghost"
           size="sm"
