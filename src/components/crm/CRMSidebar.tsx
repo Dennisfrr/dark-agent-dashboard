@@ -41,7 +41,7 @@ export function CRMSidebar() {
       "bg-card border-r border-border transition-all duration-300",
       collapsed ? "w-16" : "w-64"
     )}>
-      <div className="flex h-16 items-center justify-between px-4 border-b border-border">
+      <div className="flex h-20 items-center justify-between px-4 border-b border-border">
         <div className="flex items-center justify-center flex-1">
           <div className="flex items-center justify-center">
             <img 
@@ -49,7 +49,7 @@ export function CRMSidebar() {
               alt="BMA Logo" 
               className={cn(
                 "object-contain transition-all duration-300 filter brightness-0 invert",
-                collapsed ? "w-8 h-8" : "w-12 h-12"
+                collapsed ? "w-12 h-12" : "w-20 h-20"
               )}
             />
           </div>

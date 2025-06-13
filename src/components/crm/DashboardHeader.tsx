@@ -17,7 +17,7 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ onToggleChat }: DashboardHeaderProps) {
   return (
-    <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between">
+    <header className="h-20 border-b border-border bg-card px-6 flex items-center justify-between">
       <div className="flex items-center space-x-4">
         <h1 className="text-2xl font-bold font-playfair">Dashboard</h1>
         <div className="relative">
