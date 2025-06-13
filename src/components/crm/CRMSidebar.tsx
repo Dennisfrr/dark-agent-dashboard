@@ -42,17 +42,17 @@ export function CRMSidebar() {
       collapsed ? "w-16" : "w-64"
     )}>
       <div className="flex h-16 items-center justify-between px-4 border-b border-border">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 flex items-center justify-center">
+        <div className="flex items-center justify-center flex-1">
+          <div className="flex items-center justify-center">
             <img 
-              src="/lovable-uploads/20be4af3-33bb-4dcf-9274-7dc7b57ddfc4.png" 
+              src="/lovable-uploads/bc8a55c5-6ebb-4f5c-9c22-4ea832448c90.png" 
               alt="BMA Logo" 
-              className="w-8 h-8 object-contain"
+              className={cn(
+                "object-contain transition-all duration-300 filter brightness-0 invert",
+                collapsed ? "w-8 h-8" : "w-12 h-12"
+              )}
             />
           </div>
-          {!collapsed && (
-            <span className="font-bold text-xl tracking-wide font-playfair">BMA</span>
-          )}
         </div>
         <Button
           variant="ghost"
