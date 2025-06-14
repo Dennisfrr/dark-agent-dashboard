@@ -20,12 +20,12 @@ import { Button } from "@/components/ui/button";
 
 const navigation = [
   { name: "Dashboard", icon: Home, path: "/" },
-  { name: "Leads", icon: UserPlus, path: "/leads" },
-  { name: "Clientes", icon: Users, path: "/clientes" },
+  { name: "Caixa de Entrada", icon: Mail, path: "/inbox" },
+  { name: "Contatos", icon: Users, path: "/contatos" },
   { name: "Pipeline", icon: Target, path: "/pipeline" },
   { name: "Vendas", icon: TrendingUp, path: "/vendas" },
-  { name: "Relatórios", icon: BarChart3, path: "/relatorios" },
-  { name: "E-mails", icon: Mail, path: "/emails" },
+  { name: "Análises", icon: BarChart3, path: "/relatorios" },
+  { name: "Desempenho do Agente", icon: BarChart3, path: "/relatorios/desempenho-agente" },
   { name: "Chamadas", icon: Phone, path: "/chamadas" },
   { name: "Calendário", icon: Calendar, path: "/calendario" },
   { name: "Documentos", icon: FileText, path: "/documentos" },

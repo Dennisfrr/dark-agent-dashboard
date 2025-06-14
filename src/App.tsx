@@ -5,12 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import Leads from "./pages/Leads";
-import Clientes from "./pages/Clientes";
+import Contatos from "./pages/Contatos";
+import ContatoDetalhes from "./pages/ContatoDetalhes";
+import Inbox from "./pages/Inbox";
 import Pipeline from "./pages/Pipeline";
 import Vendas from "./pages/Vendas";
 import Relatorios from "./pages/Relatorios";
-import Emails from "./pages/Emails";
+import DesempenhoAgente from "./pages/DesempenhoAgente";
 import Chamadas from "./pages/Chamadas";
 import Calendario from "./pages/Calendario";
 import Documentos from "./pages/Documentos";
@@ -26,12 +27,13 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/leads" element={<Leads />} />
-          <Route path="/clientes" element={<Clientes />} />
+          <Route path="/inbox" element={<Inbox />} />
+          <Route path="/contatos" element={<Contatos />} />
+          <Route path="/contatos/:id" element={<ContatoDetalhes />} />
           <Route path="/pipeline" element={<Pipeline />} />
           <Route path="/vendas" element={<Vendas />} />
           <Route path="/relatorios" element={<Relatorios />} />
-          <Route path="/emails" element={<Emails />} />
+          <Route path="/relatorios/desempenho-agente" element={<DesempenhoAgente />} />
           <Route path="/chamadas" element={<Chamadas />} />
           <Route path="/calendario" element={<Calendario />} />
           <Route path="/documentos" element={<Documentos />} />
