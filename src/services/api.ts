@@ -1,5 +1,5 @@
 // API Configuration and Base Service
-const API_BASE_URL = 'https://api.example.com'; // Replace with actual API URL
+const API_BASE_URL = 'http://localhost:3005'; // Updated to use localhost:3005
 
 class ApiService {
   private baseURL: string;
