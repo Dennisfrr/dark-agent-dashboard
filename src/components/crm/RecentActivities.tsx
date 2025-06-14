@@ -4,10 +4,51 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecentActivities } from "@/hooks/useAnalytics";
-import { getStatusLabel } from "@/utils/formatters";
 
 export function RecentActivities() {
   const { data: activities, isLoading, error } = useRecentActivities();
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "completed":
+      case "closed":
+        return <Badge className="bg-success/10 text-success">Concluído</Badge>;
+      case "sent":
+        return <Badge className="bg-info/10 text-info">Enviado</Badge>;
+      case "scheduled":
+        return <Badge className="bg-warning/10 text-warning">Agendado</Badge>;
+      case "pending":
+        return <Badge className="bg-muted text-muted-foreground">Pendente</Badge>;
+      case "new":
+        return <Badge className="bg-primary/10 text-primary">Novo</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
+  const getActivityIcon = (type: string) => {
+    const iconMap = {
+      call: Phone,
+      email: Mail,
+      meeting: Calendar,
+      proposal: FileText,
+      lead: UserPlus,
+      sale: DollarSign,
+    };
+    return iconMap[type as keyof typeof iconMap] || Phone;
+  };
+
+  const getActivityColor = (type: string) => {
+    const colorMap = {
+      call: 'success',
+      email: 'info', 
+      meeting: 'warning',
+      proposal: 'primary',
+      lead: 'success',
+      sale: 'success',
+    };
+    return colorMap[type as keyof typeof colorMap] || 'primary';
+  };
 
   if (isLoading) {
     return (
@@ -44,48 +85,6 @@ export function RecentActivities() {
       </Card>
     );
   }
-
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "completed":
-    case "closed":
-      return <Badge className="bg-success/10 text-success">Concluído</Badge>;
-    case "sent":
-      return <Badge className="bg-info/10 text-info">Enviado</Badge>;
-    case "scheduled":
-      return <Badge className="bg-warning/10 text-warning">Agendado</Badge>;
-    case "pending":
-      return <Badge className="bg-muted text-muted-foreground">Pendente</Badge>;
-    case "new":
-      return <Badge className="bg-primary/10 text-primary">Novo</Badge>;
-    default:
-      return <Badge variant="secondary">{status}</Badge>;
-  }
-};
-
-  const getActivityIcon = (type: string) => {
-    const iconMap = {
-      call: Phone,
-      email: Mail,
-      meeting: Calendar,
-      proposal: FileText,
-      lead: UserPlus,
-      sale: DollarSign,
-    };
-    return iconMap[type as keyof typeof iconMap] || Phone;
-  };
-
-  const getActivityColor = (type: string) => {
-    const colorMap = {
-      call: 'success',
-      email: 'info', 
-      meeting: 'warning',
-      proposal: 'primary',
-      lead: 'success',
-      sale: 'success',
-    };
-    return colorMap[type as keyof typeof colorMap] || 'primary';
-  };
 
   return (
     <Card>
