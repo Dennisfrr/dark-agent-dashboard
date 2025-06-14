@@ -2,63 +2,48 @@ import { Phone, Mail, Calendar, FileText, UserPlus, DollarSign } from "lucide-re
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useRecentActivities } from "@/hooks/useAnalytics";
+import { getStatusLabel } from "@/utils/formatters";
 
-const activities = [
-  {
-    id: 1,
-    type: "call",
-    description: "Ligação com Maria Santos",
-    time: "2 min atrás",
-    status: "completed",
-    icon: Phone,
-    color: "success"
-  },
-  {
-    id: 2,
-    type: "email",
-    description: "E-mail enviado para João Silva",
-    time: "15 min atrás",
-    status: "sent",
-    icon: Mail,
-    color: "info"
-  },
-  {
-    id: 3,
-    type: "meeting",
-    description: "Reunião agendada com Ana Costa",
-    time: "1 hora atrás",
-    status: "scheduled",
-    icon: Calendar,
-    color: "warning"
-  },
-  {
-    id: 4,
-    type: "proposal",
-    description: "Proposta enviada para TechCorp",
-    time: "2 horas atrás",
-    status: "pending",
-    icon: FileText,
-    color: "primary"
-  },
-  {
-    id: 5,
-    type: "lead",
-    description: "Novo lead: Pedro Oliveira",
-    time: "3 horas atrás",
-    status: "new",
-    icon: UserPlus,
-    color: "success"
-  },
-  {
-    id: 6,
-    type: "sale",
-    description: "Venda fechada: R$ 25.000",
-    time: "4 horas atrás",
-    status: "closed",
-    icon: DollarSign,
-    color: "success"
+export function RecentActivities() {
+  const { data: activities, isLoading, error } = useRecentActivities();
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Atividades Recentes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex items-start space-x-3 p-3">
+                <Skeleton className="w-8 h-8 rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
-];
+
+  if (error || !activities) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Atividades Recentes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">Erro ao carregar atividades</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -78,7 +63,30 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-export function RecentActivities() {
+  const getActivityIcon = (type: string) => {
+    const iconMap = {
+      call: Phone,
+      email: Mail,
+      meeting: Calendar,
+      proposal: FileText,
+      lead: UserPlus,
+      sale: DollarSign,
+    };
+    return iconMap[type as keyof typeof iconMap] || Phone;
+  };
+
+  const getActivityColor = (type: string) => {
+    const colorMap = {
+      call: 'success',
+      email: 'info', 
+      meeting: 'warning',
+      proposal: 'primary',
+      lead: 'success',
+      sale: 'success',
+    };
+    return colorMap[type as keyof typeof colorMap] || 'primary';
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -87,25 +95,29 @@ export function RecentActivities() {
       <CardContent>
         <ScrollArea className="h-80">
           <div className="space-y-4">
-            {activities.map((activity) => (
-              <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                <div className={`w-8 h-8 rounded-lg bg-${activity.color}/10 flex items-center justify-center`}>
-                  <activity.icon className={`w-4 h-4 text-${activity.color}`} />
-                </div>
-                
-                <div className="flex-1 space-y-1">
-                  <div className="text-sm font-medium">
-                    {activity.description}
+            {activities.map((activity) => {
+              const Icon = getActivityIcon(activity.type);
+              const color = getActivityColor(activity.type);
+              return (
+                <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className={`w-8 h-8 rounded-lg bg-${color}/10 flex items-center justify-center`}>
+                    <Icon className={`w-4 h-4 text-${color}`} />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {activity.time}
-                    </span>
-                    {getStatusBadge(activity.status)}
+                  
+                  <div className="flex-1 space-y-1">
+                    <div className="text-sm font-medium">
+                      {activity.description}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        {activity.time}
+                      </span>
+                      {getStatusBadge(activity.status)}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
       </CardContent>
