@@ -4,6 +4,7 @@ export interface Lead {
   name: string;
   email: string;
   phone: string;
+  businessName?: string;
   currentPlanName: string;
   currentPlanStep: string;
   currentPlanStatus: string;
@@ -13,6 +14,7 @@ export interface Lead {
   recentReflectionsSummary: Reflection[];
   plannerHistorySummary: PlanStep[];
   lastContact?: string;
+  lastInteraction?: string;
   source?: string;
   value?: string;
   status?: string;
@@ -46,20 +48,17 @@ export interface ChatMessage {
 }
 
 export interface AnalyticsOverview {
-  totalRevenue: number;
-  newLeads: number;
-  conversions: number;
-  activeClients: number;
+  totalReflections: number;
+  activeLeads: number;
+  meetingsScheduled: number;
   averagePlanSuccessRate: number;
-  totalInteractions: number;
-  averageResponseTime: number;
-  leadSatisfactionRate: number;
 }
 
 export interface ToolUsage {
   tool: string;
   usage: number;
   success: number;
+  negative: number;
 }
 
 export interface PlanSuccess {
@@ -81,17 +80,12 @@ export interface SentimentDistribution {
   negative: number;
 }
 
-export interface SalesData {
-  month: string;
-  vendas: number;
-  leads: number;
-}
-
-export interface Activity {
+export interface RecentActivity {
   id: string;
   type: string;
   description: string;
-  time: string;
-  status: string;
-  leadId?: string;
+  createdAt: string;
+  user: {
+    name: string;
+  };
 }
