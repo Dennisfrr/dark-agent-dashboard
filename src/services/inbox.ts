@@ -29,75 +29,99 @@ export const inboxService = {
   // Buscar todas as mensagens da inbox
   async getInboxMessages(): Promise<InboxMessage[]> {
     try {
-      const [leads, meetings, sales, reports] = await Promise.all([
+      const promises = [
         leadsService.getLeads({ limit: 50 }),
         meetingsService.getAllMeetings(),
-        vendasService.getSales(),
-        relatoriosService.getReports()
-      ]);
+      ];
+
+      // Tentar buscar vendas e relatórios, mas não falhar se não existirem
+      const [leads, meetings] = await Promise.all(promises);
+      
+      let sales: any[] = [];
+      let reports: any[] = [];
+      
+      try {
+        sales = await vendasService.getSales();
+      } catch (error) {
+        console.log('Endpoint de vendas não disponível:', error);
+      }
+      
+      try {
+        reports = await relatoriosService.getReports();
+      } catch (error) {
+        console.log('Endpoint de relatórios não disponível:', error);
+      }
 
       const messages: InboxMessage[] = [];
 
-      // Converter leads em mensagens
-      leads.data.forEach(lead => {
-        messages.push({
-          id: `lead-${lead.id}`,
-          type: 'chat',
-          from: lead.name || lead.phone || 'Contato Desconhecido',
-          subject: `Conversa com ${lead.name || 'Cliente'}`,
-          preview: lead.ultimoResumoDaSituacao || 'Nova conversa iniciada',
-          timestamp: lead.lastContact || new Date().toISOString(),
-          unread: lead.status === 'new',
-          priority: this.getLeadPriority(lead),
-          leadId: lead.id,
-          originalData: lead
+      // Converter leads em mensagens  
+      if (leads && 'data' in leads && Array.isArray(leads.data)) {
+        leads.data.forEach(lead => {
+          messages.push({
+            id: `lead-${lead.id}`,
+            type: 'chat',
+            from: lead.name || lead.phone || 'Contato Desconhecido',
+            subject: `Conversa com ${lead.name || 'Cliente'}`,
+            preview: lead.ultimoResumoDaSituacao || 'Nova conversa iniciada',
+            timestamp: lead.lastContact || new Date().toISOString(),
+            unread: lead.status === 'new',
+            priority: inboxService.getLeadPriority(lead),
+            leadId: lead.id,
+            originalData: lead
+          });
         });
-      });
+      }
 
       // Converter reuniões em mensagens
-      meetings.forEach(meeting => {
-        messages.push({
-          id: `meeting-${meeting.id}`,
-          type: 'meeting',
-          from: 'Sistema de Reuniões',
-          subject: `Reunião ${meeting.status === 'scheduled' ? 'Agendada' : meeting.status}`,
-          preview: `${meeting.meetingType} - ${meeting.platform}`,
-          timestamp: meeting.scheduledDate,
-          unread: meeting.status === 'scheduled',
-          priority: meeting.status === 'scheduled' ? 'high' : 'medium',
-          originalData: meeting
+      if (meetings && Array.isArray(meetings)) {
+        meetings.forEach(meeting => {
+          messages.push({
+            id: `meeting-${meeting.id}`,
+            type: 'meeting',
+            from: 'Sistema de Reuniões',
+            subject: `Reunião ${meeting.status === 'scheduled' ? 'Agendada' : meeting.status}`,
+            preview: `${meeting.meetingType} - ${meeting.platform}`,
+            timestamp: meeting.scheduledDate,
+            unread: meeting.status === 'scheduled',
+            priority: meeting.status === 'scheduled' ? 'high' : 'medium',
+            originalData: meeting
+          });
         });
-      });
+      }
 
       // Converter vendas em mensagens
-      sales.forEach(sale => {
-        messages.push({
-          id: `sale-${sale.id}`,
-          type: 'sale',
-          from: 'Sistema de Vendas',
-          subject: `Venda - ${sale.product}`,
-          preview: `Valor: R$ ${sale.amount.toLocaleString('pt-BR')} - Status: ${sale.status}`,
-          timestamp: sale.updatedAt,
-          unread: sale.status === 'pending',
-          priority: sale.amount > 10000 ? 'high' : 'medium',
-          originalData: sale
+      if (sales && Array.isArray(sales)) {
+        sales.forEach(sale => {
+          messages.push({
+            id: `sale-${sale.id}`,
+            type: 'sale',
+            from: 'Sistema de Vendas',
+            subject: `Venda - ${sale.product}`,
+            preview: `Valor: R$ ${sale.amount.toLocaleString('pt-BR')} - Status: ${sale.status}`,
+            timestamp: sale.updatedAt,
+            unread: sale.status === 'pending',
+            priority: sale.amount > 10000 ? 'high' : 'medium',
+            originalData: sale
+          });
         });
-      });
+      }
 
       // Converter relatórios em mensagens
-      reports.forEach(report => {
-        messages.push({
-          id: `report-${report.id}`,
-          type: 'report',
-          from: 'Sistema de Relatórios',
-          subject: `Relatório: ${report.name}`,
-          preview: `Tipo: ${report.type}`,
-          timestamp: report.updatedAt,
-          unread: false,
-          priority: 'low',
-          originalData: report
+      if (reports && Array.isArray(reports)) {
+        reports.forEach(report => {
+          messages.push({
+            id: `report-${report.id}`,
+            type: 'report',
+            from: 'Sistema de Relatórios',
+            subject: `Relatório: ${report.name}`,
+            preview: `Tipo: ${report.type}`,
+            timestamp: report.updatedAt,
+            unread: false,
+            priority: 'low',
+            originalData: report
+          });
         });
-      });
+      }
 
       // Ordenar por timestamp (mais recente primeiro)
       return messages.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -110,7 +134,7 @@ export const inboxService = {
   // Buscar estatísticas da inbox
   async getInboxStats(): Promise<InboxStats> {
     try {
-      const messages = await this.getInboxMessages();
+      const messages = await inboxService.getInboxMessages();
       const today = new Date().toDateString();
       
       const unread = messages.filter(m => m.unread).length;
