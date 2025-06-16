@@ -2,25 +2,27 @@ import { api } from './api';
 
 // Tipos para os dados de configuração. Adicione mais conforme necessário.
 export interface AgentConfig {
-  id: string;
-  name: string;
-  description: string;
-  isActive: boolean;
-  settings: Record<string, any>;
+  agentName: string;
+  llmModel: string;
+  temperature: number;
+  debounceDelayMs: number;
+  maxToolIterations: number;
+  systemPromptBase: string;
 }
 
 export interface AgentTool {
   id: string;
   name: string;
   description: string;
-  isEnabled: boolean;
+  isActive: boolean;
 }
 
 export interface AgentSettings {
-  id: string;
-  key: string;
-  value: any;
-  description: string;
+  personality: string;
+  responseStyle: string;
+  language: string;
+  maxResponseTime: number;
+  autoReply: boolean;
 }
 
 export const configuracoesService = {
@@ -44,12 +46,12 @@ export const configuracoesService = {
     return response.data;
   },
 
-  async getAgentSettings(): Promise<AgentSettings[]> {
+  async getAgentSettings(): Promise<AgentSettings> {
     const response = await api.get('/api/agent/settings');
     return response.data;
   },
 
-  async updateAgentSettings(settings: AgentSettings[]): Promise<AgentSettings[]> {
+  async updateAgentSettings(settings: AgentSettings): Promise<AgentSettings> {
     const response = await api.put('/api/agent/settings', settings);
     return response.data;
   }

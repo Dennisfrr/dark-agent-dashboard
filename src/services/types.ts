@@ -19,6 +19,7 @@ export interface Lead {
   value?: string;
   status?: string;
   type?: 'lead' | 'cliente';
+  funnelStage?: string;
 }
 
 export interface Hypothesis {
@@ -42,8 +43,11 @@ export interface PlanStep {
 
 export interface ChatMessage {
   id: string;
-  sender: 'user' | 'agent';
-  message: string;
+  sender?: 'user' | 'agent';
+  role?: 'user' | 'agent';
+  message?: string;
+  text?: string;
+  parts?: Array<{ text: string }>;
   timestamp: string;
 }
 
@@ -88,4 +92,27 @@ export interface RecentActivity {
   user: {
     name: string;
   };
+}
+
+export interface AgentSettings {
+  personality: string;
+  responseStyle: string;
+  language: string;
+  maxResponseTime: number;
+  autoReply: boolean;
+}
+
+export interface AgentConfig {
+  agentName: string;
+  llmModel: string;
+  temperature: number;
+  debounceDelayMs: number;
+  maxToolIterations: number;
+  systemPromptBase: string;
+}
+
+export interface AgentTool {
+  name: string;
+  description: string;
+  isActive: boolean;
 }

@@ -39,39 +39,32 @@ export function MetricsCards() {
     );
   }
 
-  const defaultOverview = {
-    activeLeads: 0,
-    meetingsScheduled: 0,
-    averagePlanSuccessRate: 0,
-    totalReflections: 0,
-    ...overview
-  };
 
   const metrics = [
     {
       title: "Leads Ativos",
-      value: formatNumber(defaultOverview.activeLeads),
+      value: formatNumber(overview?.activeLeads || 0),
       icon: Users,
       bgColor: "bg-blue-100 dark:bg-blue-900/20",
       textColor: "text-blue-600 dark:text-blue-400"
     },
     {
       title: "Reuniões Agendadas",
-      value: formatNumber(defaultOverview.meetingsScheduled),
+      value: formatNumber(overview?.meetingsScheduled || 0),
       icon: Target,
       bgColor: "bg-green-100 dark:bg-green-900/20",
       textColor: "text-green-600 dark:text-green-400"
     },
     {
       title: "Sucesso dos Planos",
-      value: formatPercentage(defaultOverview.averagePlanSuccessRate),
+      value: formatPercentage(overview?.averagePlanSuccessRate || 0),
       icon: TrendingUp,
       bgColor: "bg-purple-100 dark:bg-purple-900/20",
       textColor: "text-purple-600 dark:text-purple-400"
     },
     {
       title: "Total de Reflexões",
-      value: formatNumber(defaultOverview.totalReflections),
+      value: formatNumber(overview?.totalReflections || 0),
       icon: DollarSign,
       bgColor: "bg-orange-100 dark:bg-orange-900/20",
       textColor: "text-orange-600 dark:text-orange-400"
