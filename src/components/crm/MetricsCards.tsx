@@ -1,8 +1,8 @@
-import { TrendingUp, TrendingDown, Users, Target, DollarSign, UserPlus } from "lucide-react";
+import { TrendingUp, Users, Target, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAnalyticsOverview } from "@/hooks/useAnalytics";
-import { formatCurrency, formatNumber, formatPercentage } from "@/utils/formatters";
+import { formatNumber, formatPercentage } from "@/utils/formatters";
 
 export function MetricsCards() {
   const { data: overview, isLoading, error } = useAnalyticsOverview();
@@ -26,78 +26,72 @@ export function MetricsCards() {
     );
   }
 
-  if (error || !overview) {
+  if (error) {
+    console.error('Erro ao carregar métricas:', error);
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="col-span-full">
           <CardContent className="p-6">
-            <p className="text-muted-foreground">Erro ao carregar métricas</p>
+            <p className="text-muted-foreground">Erro ao carregar métricas. Por favor, tente novamente mais tarde.</p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
+  const defaultOverview = {
+    activeLeads: 0,
+    meetingsScheduled: 0,
+    averagePlanSuccessRate: 0,
+    totalReflections: 0,
+    ...overview
+  };
+
   const metrics = [
     {
-      title: "Receita Total",
-      value: formatCurrency(overview.totalRevenue),
-      change: "+12.5%",
-      trend: "up",
-      icon: DollarSign,
-      color: "success"
-    },
-    {
-      title: "Novos Leads",
-      value: formatNumber(overview.newLeads),
-      change: "+8.2%",
-      trend: "up",
-      icon: UserPlus,
-      color: "info"
-    },
-    {
-      title: "Conversões",
-      value: formatNumber(overview.conversions),
-      change: "+23.1%",
-      trend: "up",
-      icon: Target,
-      color: "primary"
-    },
-    {
-      title: "Clientes Ativos",
-      value: formatNumber(overview.activeClients),
-      change: "-2.4%",
-      trend: "down",
+      title: "Leads Ativos",
+      value: formatNumber(defaultOverview.activeLeads),
       icon: Users,
-      color: "warning"
+      bgColor: "bg-blue-100 dark:bg-blue-900/20",
+      textColor: "text-blue-600 dark:text-blue-400"
+    },
+    {
+      title: "Reuniões Agendadas",
+      value: formatNumber(defaultOverview.meetingsScheduled),
+      icon: Target,
+      bgColor: "bg-green-100 dark:bg-green-900/20",
+      textColor: "text-green-600 dark:text-green-400"
+    },
+    {
+      title: "Sucesso dos Planos",
+      value: formatPercentage(defaultOverview.averagePlanSuccessRate),
+      icon: TrendingUp,
+      bgColor: "bg-purple-100 dark:bg-purple-900/20",
+      textColor: "text-purple-600 dark:text-purple-400"
+    },
+    {
+      title: "Total de Reflexões",
+      value: formatNumber(defaultOverview.totalReflections),
+      icon: DollarSign,
+      bgColor: "bg-orange-100 dark:bg-orange-900/20",
+      textColor: "text-orange-600 dark:text-orange-400"
     },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {metrics.map((metric) => (
-        <Card key={metric.title} className="relative overflow-hidden glass-effect border-accent/20 hover:border-accent/40 transition-all duration-300 shine-effect">
+        <Card key={metric.title} className="relative overflow-hidden border-accent/20 hover:border-accent/40 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               {metric.title}
             </CardTitle>
-            <div className={`w-8 h-8 rounded-lg bg-${metric.color}/10 flex items-center justify-center`}>
-              <metric.icon className={`w-4 h-4 text-${metric.color}`} />
+            <div className={`w-8 h-8 rounded-lg ${metric.bgColor} flex items-center justify-center`}>
+              <metric.icon className={`w-4 h-4 ${metric.textColor}`} />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metric.value}</div>
-            <div className="flex items-center space-x-1 text-xs">
-              {metric.trend === "up" ? (
-                <TrendingUp className="w-3 h-3 text-success" />
-              ) : (
-                <TrendingDown className="w-3 h-3 text-destructive" />
-              )}
-              <span className={metric.trend === "up" ? "text-success" : "text-destructive"}>
-                {metric.change}
-              </span>
-              <span className="text-muted-foreground">vs. mês anterior</span>
-            </div>
           </CardContent>
         </Card>
       ))}

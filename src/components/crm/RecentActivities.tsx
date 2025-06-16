@@ -4,9 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecentActivities } from "@/hooks/useAnalytics";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { formatTimeAgo } from "@/utils/formatters";
 
 export function RecentActivities() {
-  const { data: activities, isLoading, error } = useRecentActivities();
+  const { data: activities, isLoading, error } = useRecentActivities(5);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -58,12 +60,12 @@ export function RecentActivities() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="flex items-start space-x-3 p-3">
-                <Skeleton className="w-8 h-8 rounded-lg" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-48" />
-                  <Skeleton className="h-3 w-24" />
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-[180px]" />
+                  <Skeleton className="h-3 w-[120px]" />
                 </div>
               </div>
             ))}
@@ -73,14 +75,15 @@ export function RecentActivities() {
     );
   }
 
-  if (error || !activities) {
+  if (error) {
+    console.error('Erro ao carregar atividades:', error);
     return (
       <Card>
         <CardHeader>
           <CardTitle>Atividades Recentes</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">Erro ao carregar atividades</p>
+          <p className="text-muted-foreground">Erro ao carregar atividades. Por favor, tente novamente mais tarde.</p>
         </CardContent>
       </Card>
     );
@@ -92,33 +95,29 @@ export function RecentActivities() {
         <CardTitle>Atividades Recentes</CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-80">
-          <div className="space-y-4">
-            {activities.map((activity) => {
-              const Icon = getActivityIcon(activity.type);
-              const color = getActivityColor(activity.type);
-              return (
-                <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className={`w-8 h-8 rounded-lg bg-${color}/10 flex items-center justify-center`}>
-                    <Icon className={`w-4 h-4 text-${color}`} />
-                  </div>
-                  
-                  <div className="flex-1 space-y-1">
-                    <div className="text-sm font-medium">
-                      {activity.description}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {activity.time}
-                      </span>
-                      {getStatusBadge(activity.status)}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </ScrollArea>
+        <div className="space-y-4">
+          {activities?.map((activity) => (
+            <div key={activity.id} className="flex items-center gap-4">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>
+                  {activity.user?.name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'UN'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 space-y-1">
+                <p className="text-sm leading-none">
+                  <span className="font-medium">{activity.user?.name || 'Usuário'}</span>
+                  {' '}{activity.description}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatTimeAgo(activity.createdAt)}
+                </p>
+              </div>
+            </div>
+          ))}
+          {(!activities || activities.length === 0) && (
+            <p className="text-sm text-muted-foreground">Nenhuma atividade recente.</p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
