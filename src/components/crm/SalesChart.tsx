@@ -1,39 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { useSalesTrends } from "@/hooks/useAnalytics";
-import { Skeleton } from "@/components/ui/skeleton";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+
+const salesData = [
+  { month: "Jan", vendas: 65000, leads: 120 },
+  { month: "Fev", vendas: 72000, leads: 145 },
+  { month: "Mar", vendas: 68000, leads: 132 },
+  { month: "Abr", vendas: 85000, leads: 167 },
+  { month: "Mai", vendas: 91000, leads: 189 },
+  { month: "Jun", vendas: 88000, leads: 176 },
+];
 
 export function SalesChart() {
-  const { data: salesData, isLoading, error } = useSalesTrends();
-
-  if (isLoading) {
-    return (
-      <Card className="glass-effect border-accent/20 hover:border-accent/40 transition-all duration-300">
-        <CardHeader>
-          <CardTitle>Vendas & Leads</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="w-full h-[300px]" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error || !salesData || salesData.length === 0) {
-    return (
-      <Card className="glass-effect border-accent/20 hover:border-accent/40 transition-all duration-300">
-        <CardHeader>
-          <CardTitle>Vendas & Leads</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-            Dados não disponíveis
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card className="glass-effect border-accent/20 hover:border-accent/40 transition-all duration-300">
       <CardHeader>

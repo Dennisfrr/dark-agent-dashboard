@@ -1,367 +1,505 @@
-import { useEffect, useState } from 'react';
-import { Calendar } from '@/components/ui/calendar';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/components/ui/use-toast';
-import { Meeting, meetingsService } from '@/services/meetings';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { CRMLayout } from '@/components/crm/CRMLayout';
+import { useState } from "react";
+import { CRMLayout } from "@/components/crm/CRMLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarIcon, Clock, Plus, ChevronLeft, ChevronRight, Users, Edit, Trash2 } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
-interface CalendarEvent extends Meeting {
-  title: string;
-  description: string;
-  startTime: string;
-  endTime: string;
-  client: string;
+interface Evento {
+  id: number;
+  titulo: string;
+  descricao?: string;
+  data: Date;
+  horaInicio: string;
+  horaFim: string;
+  tipo: "Reunião" | "Demonstração" | "Call" | "Follow-up";
+  participantes: string[];
+  status: "Confirmado" | "Pendente" | "Cancelado";
+  cliente?: string;
 }
 
+const eventosIniciais: Evento[] = [
+  {
+    id: 1,
+    titulo: "Reunião com Cliente ABC",
+    descricao: "Discussão sobre nova proposta",
+    data: new Date(2024, 0, 15),
+    horaInicio: "09:00",
+    horaFim: "10:00",
+    tipo: "Reunião",
+    participantes: ["João Silva", "Maria Santos"],
+    status: "Confirmado",
+    cliente: "Cliente ABC"
+  },
+  {
+    id: 2,
+    titulo: "Demo do Produto - Tech Corp",
+    descricao: "Apresentação das funcionalidades",
+    data: new Date(2024, 0, 15),
+    horaInicio: "14:30",
+    horaFim: "15:15",
+    tipo: "Demonstração",
+    participantes: ["Pedro Costa"],
+    status: "Pendente",
+    cliente: "Tech Corp"
+  },
+  {
+    id: 3,
+    titulo: "Follow-up Innovation Ltd",
+    descricao: "Acompanhamento do projeto",
+    data: new Date(2024, 0, 15),
+    horaInicio: "16:00",
+    horaFim: "16:30",
+    tipo: "Call",
+    participantes: ["Ana Oliveira"],
+    status: "Confirmado",
+    cliente: "Innovation Ltd"
+  }
+];
+
 const CalendarioPage = () => {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [eventos, setEventos] = useState<Evento[]>(eventosIniciais);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [editingEvent, setEditingEvent] = useState<Evento | null>(null);
   const { toast } = useToast();
 
   // Form state
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    date: new Date(),
-    startTime: "",
-    endTime: "",
-    meetingType: "Reunião",
-    participants: "",
-    client: "",
-    platform: "Meet",
-    meetingLink: ""
+    titulo: "",
+    descricao: "",
+    data: new Date(),
+    horaInicio: "",
+    horaFim: "",
+    tipo: "Reunião" as Evento["tipo"],
+    participantes: "",
+    cliente: ""
   });
-
-  useEffect(() => {
-    loadMeetings();
-  }, []);
-
-  const loadMeetings = async () => {
-    setIsLoading(true);
-    try {
-      const meetings = await meetingsService.getAllMeetings();
-      const calendarEvents = meetings.map(meeting => ({
-        ...meeting,
-        title: meeting.meetingType,
-        description: meeting.notes || 'Sem descrição',
-        startTime: new Date(meeting.scheduledDate).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        endTime: new Date(new Date(meeting.scheduledDate).getTime() + 3600000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), // +1h
-        client: meeting.participants[0] || 'Sem participantes'
-      }));
-      setEvents(calendarEvents);
-    } catch (error) {
-      console.error('Erro ao carregar reuniões:', error);
-      toast({
-        title: "Atenção",
-        description: "Usando dados de exemplo para demonstração.",
-        variant: "default"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const meetingData = {
-        scheduledDate: new Date(`${format(formData.date, 'yyyy-MM-dd')}T${formData.startTime}`).toISOString(),
-        status: 'scheduled' as const,
-        meetingType: formData.title || formData.meetingType,
-        participants: formData.participants.split(',').map(p => p.trim()),
-        notes: formData.description,
-        platform: formData.platform,
-        meetingLink: formData.meetingLink,
-        leadId: formData.client // Usando client como leadId temporariamente
-      };
-
-      if (editingEvent) {
-        await meetingsService.updateMeetingStatus(editingEvent.id, 'scheduled');
-        toast({
-          title: "Sucesso",
-          description: "Reunião atualizada com sucesso!",
-        });
-      } else {
-        await meetingsService.createMeeting(meetingData.leadId, meetingData);
-        toast({
-          title: "Sucesso",
-          description: "Reunião agendada com sucesso!",
-        });
-      }
-
-      await loadMeetings();
-      setIsDialogOpen(false);
-      resetForm();
-    } catch (error) {
-      console.error('Erro ao salvar reunião:', error);
-      toast({
-        title: "Atenção",
-        description: "A reunião foi salva localmente para demonstração.",
-        variant: "default"
-      });
-      await loadMeetings(); // Recarrega para pegar os dados mockados
-    }
-  };
-
-  const handleEventClick = (event: CalendarEvent) => {
-    setEditingEvent(event);
-    setFormData({
-      title: event.title,
-      description: event.description,
-      date: new Date(event.scheduledDate),
-      startTime: event.startTime,
-      endTime: event.endTime,
-      meetingType: event.meetingType,
-      participants: event.participants.join(', '),
-      client: event.client,
-      platform: event.platform,
-      meetingLink: event.meetingLink
-    });
-    setIsDialogOpen(true);
-  };
 
   const resetForm = () => {
     setFormData({
-      title: "",
-      description: "",
-      date: new Date(),
-      startTime: "",
-      endTime: "",
-      meetingType: "Reunião",
-      participants: "",
-      client: "",
-      platform: "Meet",
-      meetingLink: ""
+      titulo: "",
+      descricao: "",
+      data: new Date(),
+      horaInicio: "",
+      horaFim: "",
+      tipo: "Reunião",
+      participantes: "",
+      cliente: ""
     });
     setEditingEvent(null);
   };
 
-  const handleApprove = async (event: CalendarEvent) => {
-    try {
-      await meetingsService.updateMeetingStatus(event.id, 'approved');
-      await loadMeetings();
+  const handleSaveEvent = () => {
+    if (!formData.titulo || !formData.horaInicio || !formData.horaFim) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newEvent: Evento = {
+      id: editingEvent ? editingEvent.id : Date.now(),
+      titulo: formData.titulo,
+      descricao: formData.descricao,
+      data: formData.data,
+      horaInicio: formData.horaInicio,
+      horaFim: formData.horaFim,
+      tipo: formData.tipo,
+      participantes: formData.participantes.split(",").map(p => p.trim()).filter(p => p),
+      status: "Confirmado",
+      cliente: formData.cliente
+    };
+
+    if (editingEvent) {
+      setEventos(eventos.map(e => e.id === editingEvent.id ? newEvent : e));
       toast({
         title: "Sucesso",
-        description: "Reunião aprovada com sucesso!",
+        description: "Evento atualizado com sucesso!"
       });
-    } catch (error) {
-      console.error('Erro ao aprovar reunião:', error);
+    } else {
+      setEventos([...eventos, newEvent]);
       toast({
-        title: "Atenção",
-        description: "Status atualizado localmente para demonstração.",
-        variant: "default"
+        title: "Sucesso", 
+        description: "Evento criado com sucesso!"
       });
-      await loadMeetings(); // Recarrega para pegar os dados mockados
     }
+
+    setIsDialogOpen(false);
+    resetForm();
   };
 
-  const handleReject = async (event: CalendarEvent) => {
-    try {
-      await meetingsService.updateMeetingStatus(event.id, 'rejected');
-      await loadMeetings();
-      toast({
-        title: "Sucesso",
-        description: "Reunião rejeitada com sucesso!",
-      });
-    } catch (error) {
-      console.error('Erro ao rejeitar reunião:', error);
-      toast({
-        title: "Atenção",
-        description: "Status atualizado localmente para demonstração.",
-        variant: "default"
-      });
-      await loadMeetings(); // Recarrega para pegar os dados mockados
-    }
+  const handleEditEvent = (evento: Evento) => {
+    setEditingEvent(evento);
+    setFormData({
+      titulo: evento.titulo,
+      descricao: evento.descricao || "",
+      data: evento.data,
+      horaInicio: evento.horaInicio,
+      horaFim: evento.horaFim,
+      tipo: evento.tipo,
+      participantes: evento.participantes.join(", "),
+      cliente: evento.cliente || ""
+    });
+    setIsDialogOpen(true);
   };
+
+  const handleDeleteEvent = (eventId: number) => {
+    setEventos(eventos.filter(e => e.id !== eventId));
+    toast({
+      title: "Sucesso",
+      description: "Evento excluído com sucesso!"
+    });
+  };
+
+  const getEventosDoMes = () => {
+    return eventos.filter(evento => 
+      evento.data.getMonth() === currentMonth.getMonth() &&
+      evento.data.getFullYear() === currentMonth.getFullYear()
+    );
+  };
+
+  const getEventosDoDia = (data: Date) => {
+    return eventos.filter(evento => 
+      evento.data.toDateString() === data.toDateString()
+    );
+  };
+
+  const eventosHoje = getEventosDoDia(new Date());
+  const eventosDoMes = getEventosDoMes();
 
   return (
     <CRMLayout>
       <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Calendário de Reuniões</h1>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Calendário</h1>
+            <p className="text-muted-foreground">Gerencie seus compromissos e reuniões</p>
+          </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { resetForm(); setIsDialogOpen(true); }}>
-                Nova Reunião
+              <Button className="bg-gradient-primary text-primary-foreground" onClick={resetForm}>
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Evento
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>{editingEvent ? 'Editar Reunião' : 'Nova Reunião'}</DialogTitle>
+                <DialogTitle>{editingEvent ? "Editar Evento" : "Novo Evento"}</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título</Label>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="titulo">Título *</Label>
                   <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
+                    id="titulo"
+                    value={formData.titulo}
+                    onChange={(e) => setFormData({...formData, titulo: e.target.value})}
+                    placeholder="Título do evento"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="descricao">Descrição</Label>
+                  <Textarea
+                    id="descricao"
+                    value={formData.descricao}
+                    onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+                    placeholder="Descrição do evento"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
+                <div>
+                  <Label>Data *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.data ? format(formData.data, "PPP") : "Selecione a data"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formData.data}
+                        onSelect={(date) => date && setFormData({...formData, data: date})}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Data</Label>
-                    <Calendar
-                      mode="single"
-                      selected={formData.date}
-                      onSelect={(date) => date && setFormData({ ...formData, date })}
-                      className="rounded-md border"
-                      locale={ptBR}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="startTime">Horário</Label>
+                  <div>
+                    <Label htmlFor="horaInicio">Hora Início *</Label>
                     <Input
-                      id="startTime"
+                      id="horaInicio"
                       type="time"
-                      value={formData.startTime}
-                      onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                      required
+                      value={formData.horaInicio}
+                      onChange={(e) => setFormData({...formData, horaInicio: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="horaFim">Hora Fim *</Label>
+                    <Input
+                      id="horaFim"
+                      type="time"
+                      value={formData.horaFim}
+                      onChange={(e) => setFormData({...formData, horaFim: e.target.value})}
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="participants">Participantes</Label>
-                  <Input
-                    id="participants"
-                    placeholder="Nome dos participantes (separados por vírgula)"
-                    value={formData.participants}
-                    onChange={(e) => setFormData({ ...formData, participants: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="platform">Plataforma</Label>
-                  <Select
-                    value={formData.platform}
-                    onValueChange={(value) => setFormData({ ...formData, platform: value })}
-                  >
+                <div>
+                  <Label>Tipo</Label>
+                  <Select value={formData.tipo} onValueChange={(value: Evento["tipo"]) => setFormData({...formData, tipo: value})}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione a plataforma" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Meet">Google Meet</SelectItem>
-                      <SelectItem value="Zoom">Zoom</SelectItem>
-                      <SelectItem value="Teams">Microsoft Teams</SelectItem>
+                      <SelectItem value="Reunião">Reunião</SelectItem>
+                      <SelectItem value="Demonstração">Demonstração</SelectItem>
+                      <SelectItem value="Call">Call</SelectItem>
+                      <SelectItem value="Follow-up">Follow-up</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="meetingLink">Link da Reunião</Label>
+                <div>
+                  <Label htmlFor="cliente">Cliente</Label>
                   <Input
-                    id="meetingLink"
-                    placeholder="Link da reunião virtual"
-                    value={formData.meetingLink}
-                    onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
+                    id="cliente"
+                    value={formData.cliente}
+                    onChange={(e) => setFormData({...formData, cliente: e.target.value})}
+                    placeholder="Nome do cliente"
                   />
                 </div>
 
-                <div className="flex justify-end gap-2">
-                  <Button type="submit">
-                    {editingEvent ? 'Atualizar' : 'Agendar'} Reunião
-                  </Button>
+                <div>
+                  <Label htmlFor="participantes">Participantes</Label>
+                  <Input
+                    id="participantes"
+                    value={formData.participantes}
+                    onChange={(e) => setFormData({...formData, participantes: e.target.value})}
+                    placeholder="Separe por vírgulas"
+                  />
                 </div>
-              </form>
+
+                <Button onClick={handleSaveEvent} className="w-full">
+                  {editingEvent ? "Atualizar" : "Criar"} Evento
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-[2fr,1fr]">
-          <div className="space-y-4">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              className="rounded-md border shadow"
-              locale={ptBR}
-            />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <CalendarIcon className="w-8 h-8 text-primary mr-3" />
+                <div>
+                  <div className="text-2xl font-bold text-foreground">{eventosHoje.length}</div>
+                  <p className="text-muted-foreground text-sm">Eventos Hoje</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <Clock className="w-8 h-8 text-success mr-3" />
+                <div>
+                  <div className="text-2xl font-bold text-foreground">{eventosDoMes.length}</div>
+                  <p className="text-muted-foreground text-sm">Este Mês</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-2xl font-bold text-warning">{eventos.filter(e => e.status === "Pendente").length}</div>
+              <p className="text-muted-foreground text-sm">Pendentes</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-2xl font-bold text-foreground">{eventos.filter(e => e.status === "Confirmado").length}</div>
+              <p className="text-muted-foreground text-sm">Confirmados</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>{format(currentMonth, "MMMM yyyy")}</CardTitle>
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setCurrentMonth(new Date())}
+                    >
+                      Hoje
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => date && setSelectedDate(date)}
+                  month={currentMonth}
+                  onMonthChange={setCurrentMonth}
+                  className="w-full"
+                  components={{
+                    Day: ({ date, ...props }) => {
+                      const eventosNoDia = getEventosDoDia(date);
+                      const isToday = date.toDateString() === new Date().toDateString();
+                      
+                      return (
+                        <div
+                          {...props}
+                          className={cn(
+                            "relative p-2 h-12 border border-border/50 cursor-pointer hover:bg-muted/50",
+                            isToday && "bg-primary text-primary-foreground",
+                            eventosNoDia.length > 0 && "bg-gradient-primary/10"
+                          )}
+                        >
+                          <div className="text-sm">{date.getDate()}</div>
+                          {eventosNoDia.length > 0 && (
+                            <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2">
+                              <div className="w-2 h-2 bg-primary rounded-full"></div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                  }}
+                />
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Reuniões do Dia</h2>
-            {isLoading ? (
-              <div className="text-muted-foreground">Carregando reuniões...</div>
-            ) : events.length > 0 ? (
-              events
-                .filter(event => {
-                  const eventDate = new Date(event.scheduledDate);
-                  return (
-                    eventDate.getDate() === selectedDate.getDate() &&
-                    eventDate.getMonth() === selectedDate.getMonth() &&
-                    eventDate.getFullYear() === selectedDate.getFullYear()
-                  );
-                })
-                .map(event => (
-                  <div
-                    key={event.id}
-                    className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
-                    onClick={() => handleEventClick(event)}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-medium">{event.title}</h3>
-                        <p className="text-sm text-muted-foreground">{event.client}</p>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Eventos de {format(selectedDate, "dd/MM")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {getEventosDoDia(selectedDate).length === 0 ? (
+                    <p className="text-muted-foreground text-sm">Nenhum evento agendado</p>
+                  ) : (
+                    getEventosDoDia(selectedDate).map((evento) => (
+                      <div key={evento.id} className="p-3 border border-border rounded-lg hover:bg-muted/50">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-medium text-sm text-foreground">{evento.titulo}</div>
+                          <div className="flex items-center space-x-1">
+                            <Badge variant={evento.status === "Confirmado" ? "default" : "secondary"}>
+                              {evento.status}
+                            </Badge>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => handleEditEvent(evento)}
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-destructive"
+                              onClick={() => handleDeleteEvent(evento.id)}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex items-center text-xs text-muted-foreground mb-2">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {evento.horaInicio} - {evento.horaFim}
+                        </div>
+                        {evento.participantes.length > 0 && (
+                          <div className="flex items-center text-xs text-muted-foreground mb-2">
+                            <Users className="w-3 h-3 mr-1" />
+                            {evento.participantes.join(", ")}
+                          </div>
+                        )}
+                        <Badge variant="outline" className="text-xs">
+                          {evento.tipo}
+                        </Badge>
+                        {evento.cliente && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Cliente: {evento.cliente}
+                          </div>
+                        )}
                       </div>
-                      <span className="text-sm font-medium">
-                        {event.startTime} - {event.endTime}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">{event.description}</p>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleApprove(event);
-                        }}
-                        disabled={event.status === 'approved'}
-                      >
-                        {event.status === 'approved' ? 'Aprovada' : 'Aprovar'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleReject(event);
-                        }}
-                        disabled={event.status === 'rejected'}
-                      >
-                        {event.status === 'rejected' ? 'Rejeitada' : 'Rejeitar'}
-                      </Button>
-                    </div>
-                  </div>
-                ))
-            ) : (
-              <p className="text-muted-foreground">Nenhuma reunião agendada para este dia.</p>
-            )}
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Próximos Eventos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {eventos
+                    .filter(evento => evento.data >= new Date())
+                    .sort((a, b) => a.data.getTime() - b.data.getTime())
+                    .slice(0, 5)
+                    .map((evento) => (
+                      <div key={evento.id} className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/50">
+                        <div>
+                          <div className="font-medium text-sm text-foreground">{evento.titulo}</div>
+                          <div className="text-xs text-muted-foreground">{evento.cliente}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs font-medium text-foreground">{format(evento.data, "dd MMM")}</div>
+                          <div className="text-xs text-muted-foreground">{evento.horaInicio}</div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

@@ -3,49 +3,42 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Search, Filter, MoreVertical, Loader2 } from "lucide-react";
-import { leadsService } from "@/services/leads";
-import { Lead } from "@/services/types";
-import React from "react";
+import { UserPlus, Search, Filter, MoreVertical } from "lucide-react";
+
+const leadsData = [
+  {
+    id: 1,
+    name: "João Silva",
+    email: "joao@email.com",
+    phone: "(11) 99999-9999",
+    status: "Novo",
+    source: "Website",
+    value: "R$ 15.000",
+    score: 85
+  },
+  {
+    id: 2,
+    name: "Maria Santos",
+    email: "maria@email.com",
+    phone: "(11) 88888-8888",
+    status: "Qualificado",
+    source: "LinkedIn",
+    value: "R$ 25.000",
+    score: 92
+  },
+  {
+    id: 3,
+    name: "Pedro Costa",
+    email: "pedro@email.com",
+    phone: "(11) 77777-7777",
+    status: "Proposta",
+    source: "Indicação",
+    value: "R$ 35.000",
+    score: 78
+  }
+];
 
 const Leads = () => {
-  const [leadsData, setLeadsData] = React.useState<Lead[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    const fetchLeads = async () => {
-      try {
-        setLoading(true);
-        const resp = await leadsService.getLeads({ limit: 50 });
-        // @ts-ignore
-        setLeadsData(resp.data || []);
-      } catch (err) {
-        console.error(err);
-        setError("Falha ao carregar leads.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchLeads();
-  }, []);
-
-  if (loading) {
-    return (
-      <CRMLayout>
-        <div className="flex items-center justify-center h-full"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
-      </CRMLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <CRMLayout>
-        <div className="p-6 text-center text-red-500">{error}</div>
-      </CRMLayout>
-    );
-  }
-
   return (
     <CRMLayout>
       <div className="p-6">
@@ -87,6 +80,8 @@ const Leads = () => {
                     <th className="text-left py-3 px-4 font-medium text-muted-foreground">Contato</th>
                     <th className="text-left py-3 px-4 font-medium text-muted-foreground">Status</th>
                     <th className="text-left py-3 px-4 font-medium text-muted-foreground">Origem</th>
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Valor</th>
+                    <th className="text-left py-3 px-4 font-medium text-muted-foreground">Score</th>
                     <th className="text-left py-3 px-4 font-medium text-muted-foreground">Ações</th>
                   </tr>
                 </thead>
@@ -104,6 +99,18 @@ const Leads = () => {
                         <Badge variant="secondary">{lead.status}</Badge>
                       </td>
                       <td className="py-4 px-4 text-muted-foreground">{lead.source}</td>
+                      <td className="py-4 px-4 font-medium text-foreground">{lead.value}</td>
+                      <td className="py-4 px-4">
+                        <div className="flex items-center">
+                          <div className="w-12 h-2 bg-muted rounded-full mr-2">
+                            <div 
+                              className="h-full bg-gradient-primary rounded-full" 
+                              style={{ width: `${lead.score}%` }}
+                            />
+                          </div>
+                          <span className="text-sm text-muted-foreground">{lead.score}</span>
+                        </div>
+                      </td>
                       <td className="py-4 px-4">
                         <Button variant="ghost" size="sm">
                           <MoreVertical className="w-4 h-4" />

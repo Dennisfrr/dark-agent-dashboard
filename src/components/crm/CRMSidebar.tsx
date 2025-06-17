@@ -26,7 +26,9 @@ const navigation = [
   { name: "Vendas", icon: TrendingUp, path: "/vendas" },
   { name: "Análises", icon: BarChart3, path: "/relatorios" },
   { name: "Desempenho do Agente", icon: BarChart3, path: "/relatorios/desempenho-agente" },
+  { name: "Chamadas", icon: Phone, path: "/chamadas" },
   { name: "Calendário", icon: Calendar, path: "/calendario" },
+  { name: "Documentos", icon: FileText, path: "/documentos" },
   { name: "Configurações", icon: Settings, path: "/configuracoes" },
 ];
 
