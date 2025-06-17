@@ -12,7 +12,6 @@ import Pipeline from "./pages/Pipeline";
 import Vendas from "./pages/Vendas";
 import Relatorios from "./pages/Relatorios";
 import DesempenhoAgente from "./pages/DesempenhoAgente";
-import Chamadas from "./pages/Chamadas";
 import Calendario from "./pages/Calendario";
 import Documentos from "./pages/Documentos";
 import Configuracoes from "./pages/Configuracoes";
@@ -34,7 +33,6 @@ const App = () => (
           <Route path="/vendas" element={<Vendas />} />
           <Route path="/relatorios" element={<Relatorios />} />
           <Route path="/relatorios/desempenho-agente" element={<DesempenhoAgente />} />
-          <Route path="/chamadas" element={<Chamadas />} />
           <Route path="/calendario" element={<Calendario />} />
           <Route path="/documentos" element={<Documentos />} />
           <Route path="/configuracoes" element={<Configuracoes />} />
