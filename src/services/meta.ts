@@ -254,8 +254,8 @@ class MetaService {
     const leads = await this.getLeads();
     const conversations = await this.messengerAPI.getConversations();
     
-    // Simular processamento e criação de contatos únicos
-    return this.generateMockContacts();
+    // Gerar contatos inteligentes a partir de leads e mensagens
+    return this.generateContactsFromLeadsAndMessages(leads, conversations);
   }
 
   async getOpportunities(): Promise<MetaOpportunity[]> {
@@ -313,6 +313,176 @@ class MetaService {
         status: 'active'
       }
     ];
+  }
+
+  // Método principal para gerar contatos inteligentes
+  private generateContactsFromLeadsAndMessages(leads: MetaLead[], messages: MetaMessage[]): MetaContact[] {
+    const contactsMap = new Map<string, MetaContact>();
+    
+    // 1. Mapear leads para contatos iniciais
+    leads.forEach(lead => {
+      const fullName = lead.field_data.find(f => f.name === 'full_name')?.values[0];
+      const email = lead.field_data.find(f => f.name === 'email')?.values[0];
+      const phone = lead.field_data.find(f => f.name === 'phone_number')?.values[0];
+      
+      if (fullName) {
+        const contactId = this.generateContactId(lead.id, fullName, email);
+        const contact: MetaContact = {
+          id: contactId,
+          name: fullName,
+          email,
+          phone,
+          platform: lead.platform,
+          first_interaction: lead.created_at,
+          last_interaction: lead.created_at,
+          total_interactions: 1,
+          tags: ['novo-lead'],
+          status: 'active'
+        };
+        contactsMap.set(contactId, contact);
+      }
+    });
+    
+    // 2. Enriquecer contatos com mensagens
+    messages.forEach(message => {
+      const existingContact = this.findContactByMessage(contactsMap, message);
+      
+      if (existingContact) {
+        // Atualizar contato existente
+        this.enrichContactWithMessage(existingContact, message);
+      } else {
+        // Criar novo contato a partir da mensagem
+        const newContact = this.createContactFromMessage(message);
+        if (newContact) {
+          contactsMap.set(newContact.id, newContact);
+        }
+      }
+    });
+    
+    return Array.from(contactsMap.values());
+  }
+
+  // Gerar ID único e consistente para contato
+  private generateContactId(leadId: string, name: string, email?: string): string {
+    const identifier = email || name.toLowerCase().replace(/\s+/g, '');
+    return `contact_${leadId}_${identifier.substring(0, 10)}`;
+  }
+
+  // Encontrar contato existente baseado na mensagem
+  private findContactByMessage(contactsMap: Map<string, MetaContact>, message: MetaMessage): MetaContact | undefined {
+    // Buscar por contact_id da mensagem
+    if (message.contact_id) {
+      for (const contact of contactsMap.values()) {
+        if (contact.id === message.contact_id) {
+          return contact;
+        }
+      }
+    }
+    
+    // Buscar por nome ou ID do remetente
+    for (const contact of contactsMap.values()) {
+      if (contact.name === message.from.name || 
+          contact.email === message.from.id ||
+          contact.id.includes(message.from.id)) {
+        return contact;
+      }
+    }
+    
+    return undefined;
+  }
+
+  // Enriquecer contato existente com dados da mensagem
+  private enrichContactWithMessage(contact: MetaContact, message: MetaMessage): void {
+    // Atualizar última interação
+    if (new Date(message.created_time) > new Date(contact.last_interaction)) {
+      contact.last_interaction = message.created_time;
+    }
+    
+    // Incrementar total de interações
+    contact.total_interactions += 1;
+    
+    // Análise de sentimento e extração de intenções
+    const messageAnalysis = this.analyzeMessage(message.message);
+    
+    // Adicionar tags baseadas na análise
+    if (messageAnalysis.sentiment && !contact.tags.includes(messageAnalysis.sentiment)) {
+      contact.tags.push(messageAnalysis.sentiment);
+    }
+    
+    messageAnalysis.intentions.forEach(intention => {
+      if (!contact.tags.includes(intention)) {
+        contact.tags.push(intention);
+      }
+    });
+    
+    // Atualizar status baseado na atividade
+    const daysSinceLastInteraction = Math.floor(
+      (Date.now() - new Date(contact.last_interaction).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    
+    if (daysSinceLastInteraction <= 1) {
+      contact.status = 'active';
+    } else if (daysSinceLastInteraction <= 7) {
+      contact.status = 'active';
+    } else {
+      contact.status = 'inactive';
+    }
+  }
+
+  // Criar novo contato a partir de mensagem
+  private createContactFromMessage(message: MetaMessage): MetaContact | null {
+    if (!message.from.name) return null;
+    
+    const messageAnalysis = this.analyzeMessage(message.message);
+    
+    return {
+      id: `contact_msg_${message.from.id}`,
+      name: message.from.name,
+      platform: message.platform,
+      first_interaction: message.created_time,
+      last_interaction: message.created_time,
+      total_interactions: 1,
+      tags: ['conversa-iniciada', ...messageAnalysis.intentions, messageAnalysis.sentiment].filter(Boolean),
+      status: 'active'
+    };
+  }
+
+  // Análise de sentimento e extração de intenções (PNL básica)
+  private analyzeMessage(message: string): { sentiment: string; intentions: string[] } {
+    const lowerMessage = message.toLowerCase();
+    
+    // Análise de sentimento
+    let sentiment = 'neutral';
+    
+    const positiveWords = ['obrigado', 'ótimo', 'excelente', 'perfeito', 'adorei', 'maravilhoso', 'gostei'];
+    const negativeWords = ['ruim', 'péssimo', 'horrível', 'reclamação', 'problema', 'insatisfeito', 'decepcionado'];
+    
+    if (positiveWords.some(word => lowerMessage.includes(word))) {
+      sentiment = 'positive';
+    } else if (negativeWords.some(word => lowerMessage.includes(word))) {
+      sentiment = 'negative';
+    }
+    
+    // Extração de intenções
+    const intentions: string[] = [];
+    
+    const intentionPatterns = [
+      { keywords: ['preço', 'valor', 'custo', 'orçamento'], tag: 'interessado-preco' },
+      { keywords: ['demo', 'demonstração', 'teste', 'experimentar'], tag: 'solicitou-demo' },
+      { keywords: ['comprar', 'adquirir', 'contratar', 'fechar'], tag: 'intencao-compra' },
+      { keywords: ['informação', 'detalhe', 'saber mais', 'explicar'], tag: 'pediu-informacao' },
+      { keywords: ['suporte', 'ajuda', 'problema', 'dúvida'], tag: 'precisa-suporte' },
+      { keywords: ['reclamação', 'insatisfeito', 'cancelar'], tag: 'reclamacao' },
+      { keywords: ['agendar', 'reunião', 'conversar', 'ligar'], tag: 'quer-agendar' }
+    ];
+    
+    intentionPatterns.forEach(pattern => {
+      if (pattern.keywords.some(keyword => lowerMessage.includes(keyword))) {
+        intentions.push(pattern.tag);
+      }
+    });
+    
+    return { sentiment, intentions };
   }
 
   private generateOpportunitiesFromLeads(leads: MetaLead[]): MetaOpportunity[] {
